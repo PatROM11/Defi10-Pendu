@@ -2,98 +2,1187 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jeu du Pendu</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PAT PENDU</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 10px; }
-        #game-container { max-width: 400px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        svg { width: 100%; max-width: 200px; height: auto; margin-bottom: 10px; }
-        .draw { fill: none; stroke: #333; stroke-width: 4; stroke-dasharray: 200; stroke-dashoffset: 200; transition: stroke-dashoffset 0.6s ease-in-out; }
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        
+        :root {
+            --neon-pink: #ff00ff;
+            --neon-cyan: #00ffff;
+            --neon-green: #39ff14;
+            --neon-yellow: #ffff00;
+            --neon-orange: #ff6600;
+            --neon-purple: #bf00ff;
+            --neon-red: #ff073a;
+            --dark-bg: #0a0a1a;
+            --darker-bg: #050510;
+        }
+        
+        body { 
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center; 
+            background: var(--dark-bg);
+            min-height: 100vh; 
+            width: 100vw;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            color: var(--neon-cyan);
+        }
+        
+        #game-container { 
+            width: 100%;
+            min-height: 100vh;
+            max-width: 450px; 
+            margin: 0 auto; 
+            background: var(--darker-bg);
+            padding: 10px; 
+            padding-bottom: 30px;
+            border: 2px solid var(--neon-pink);
+            box-shadow: 0 0 10px var(--neon-pink);
+        }
+        
+        h1 { 
+            color: var(--neon-yellow);
+            font-size: 18px;
+            text-shadow: 0 0 10px var(--neon-yellow);
+            letter-spacing: 4px;
+            margin-bottom: 8px;
+        }
+        
+        /* MENU */
+        #menu { padding: 20px 0; }
+        
+        .mode-btn { 
+            display: block; 
+            width: 90%; 
+            margin: 12px auto; 
+            padding: 15px; 
+            font-size: 14px; 
+            font-weight: bold; 
+            font-family: inherit;
+            border: 2px solid; 
+            cursor: pointer; 
+            background: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .mode-1 { 
+            color: var(--neon-green);
+            border-color: var(--neon-green);
+            text-shadow: 0 0 10px var(--neon-green);
+            box-shadow: 0 0 10px rgba(57,255,20,0.3);
+        }
+        .mode-1:active { background: rgba(57,255,20,0.2); }
+        
+        .mode-2 { 
+            color: var(--neon-orange);
+            border-color: var(--neon-orange);
+            text-shadow: 0 0 10px var(--neon-orange);
+            box-shadow: 0 0 10px rgba(255,102,0,0.3);
+        }
+        .mode-2:active { background: rgba(255,102,0,0.2); }
+        
+        .mode-3 { 
+            color: var(--neon-red);
+            border-color: var(--neon-red);
+            text-shadow: 0 0 10px var(--neon-red);
+            box-shadow: 0 0 10px rgba(255,7,58,0.3);
+        }
+        .mode-3:active { background: rgba(255,7,58,0.2); }
+        
+        .mode-desc { 
+            font-size: 11px; 
+            color: #888; 
+            margin-top: 6px; 
+            font-weight: normal;
+            letter-spacing: 1px;
+        }
+        
+        /* HUD */
+        #hud { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 8px 12px; 
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--neon-cyan);
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        #timer { 
+            font-size: 16px; 
+            font-weight: bold; 
+            color: var(--neon-red);
+            text-shadow: 0 0 10px var(--neon-red);
+        }
+        #score { 
+            font-size: 16px; 
+            font-weight: bold; 
+            color: var(--neon-green);
+            text-shadow: 0 0 10px var(--neon-green);
+        }
+        #word-count { 
+            font-size: 11px; 
+            color: var(--neon-purple);
+            text-shadow: 0 0 5px var(--neon-purple);
+        }
+        
+        /* SVG PENDU */
+        #svg-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 8px 0;
+        }
+        svg { 
+            width: auto;
+            height: 140px;
+            display: block;
+        }
+        .draw { 
+            fill: none; 
+            stroke: var(--neon-pink); 
+            stroke-width: 3; 
+            stroke-dasharray: 200; 
+            stroke-dashoffset: 200; 
+            transition: stroke-dashoffset 0.8s ease-in-out;
+            filter: drop-shadow(0 0 5px var(--neon-pink));
+        }
         .draw.visible { stroke-dashoffset: 0; }
-        #word-display { font-size: 24px; font-weight: bold; letter-spacing: 6px; margin: 10px 0; color: #2c3e50; }
+        .base { 
+            stroke: var(--neon-cyan); 
+            stroke-width: 3;
+            filter: drop-shadow(0 0 5px var(--neon-cyan));
+        }
         
-        /* Clavier virtuel */
-        #keyboard { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 15px; }
-        .key { padding: 10px 5px; background: #ddd; border-radius: 5px; cursor: pointer; font-weight: bold; user-select: none; }
-        .key:active { background: #bbb; }
+        /* AFFICHAGE DU MOT */
+        #word-display { 
+            font-size: 26px; 
+            font-weight: bold; 
+            letter-spacing: 8px; 
+            margin: 12px 0; 
+            color: var(--neon-yellow);
+            text-shadow: 0 0 10px var(--neon-yellow);
+            min-height: 32px;
+        }
         
-        #mot-input { width: 90%; padding: 10px; margin-top: 10px; border: 2px solid #ddd; border-radius: 8px; text-align: center; }
-        #message { font-weight: bold; font-size: 20px; margin-top: 10px; height: 25px; }
-        #replay-btn { display: none; margin-top: 10px; padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; }
+        /* BOUTON J'AI TROUVÉ */
+        #found-btn { 
+            display: block; 
+            width: 80%; 
+            margin: 10px auto; 
+            padding: 10px; 
+            background: transparent;
+            color: var(--neon-cyan);
+            border: 2px solid var(--neon-cyan);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+        #found-btn:active { background: rgba(0,255,255,0.2); }
+        
+        /* INPUT MOT COMPLET */
+        #word-input-section { 
+            display: none; 
+            margin: 10px 0; 
+            padding: 15px; 
+            background: rgba(0,0,0,0.7);
+            border: 2px solid var(--neon-yellow);
+        }
+        #word-input-section p {
+            color: var(--neon-yellow);
+            text-shadow: 0 0 5px var(--neon-yellow);
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        #word-input { 
+            width: 70%; 
+            padding: 10px; 
+            font-size: 16px; 
+            text-align: center; 
+            background: var(--dark-bg);
+            border: 2px solid var(--neon-orange); 
+            color: var(--neon-orange);
+            font-family: inherit;
+            text-transform: uppercase;
+            text-shadow: 0 0 5px var(--neon-orange);
+        }
+        #word-input:focus { outline: none; border-color: var(--neon-yellow); }
+        .input-btns { margin-top: 10px; }
+        .input-btns button { 
+            padding: 10px 20px; 
+            margin: 0 5px; 
+            border: 2px solid;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+            background: transparent;
+        }
+        #confirm-word { color: var(--neon-green); border-color: var(--neon-green); }
+        #confirm-word:active { background: rgba(57,255,20,0.2); }
+        #cancel-word { color: var(--neon-red); border-color: var(--neon-red); }
+        #cancel-word:active { background: rgba(255,7,58,0.2); }
+        
+        /* CLAVIER */
+        #keyboard { 
+            display: grid; 
+            grid-template-columns: repeat(10, 1fr); 
+            gap: 4px; 
+            margin: 10px auto; 
+            max-width: 380px;
+            padding: 0 5px;
+        }
+        .key { 
+            padding: 10px 1px; 
+            background: var(--dark-bg);
+            border: 1px solid var(--neon-cyan);
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 13px; 
+            font-family: inherit;
+            user-select: none; 
+            color: var(--neon-cyan);
+            text-shadow: 0 0 5px var(--neon-cyan);
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+        }
+        .key:active { 
+            transform: scale(0.95);
+            background: rgba(0,255,255,0.2);
+        }
+        .key.used { 
+            background: rgba(100,100,100,0.3); 
+            opacity: 0.3; 
+            cursor: not-allowed; 
+            border-color: #555;
+            color: #555;
+            text-shadow: none;
+        }
+        .key.used.correct { 
+            background: rgba(57,255,20,0.2); 
+            opacity: 1;
+            border-color: var(--neon-green);
+            color: var(--neon-green);
+            text-shadow: 0 0 10px var(--neon-green);
+        }
+        .key.used.wrong { 
+            background: rgba(255,7,58,0.2); 
+            opacity: 1;
+            border-color: var(--neon-red);
+            color: var(--neon-red);
+            text-shadow: 0 0 10px var(--neon-red);
+        }
+        
+        /* MESSAGES */
+        #message { 
+            font-size: 16px; 
+            margin: 10px 0; 
+            min-height: 22px;
+            text-shadow: 0 0 10px currentColor;
+            font-weight: bold;
+        }
+        .msg-win { color: var(--neon-green); }
+        .msg-lose { color: var(--neon-red); }
+        .msg-info { color: var(--neon-cyan); }
+        
+        /* BOUTONS DE CONTRÔLE */
+        .control-btns { 
+            display: flex; 
+            gap: 10px; 
+            justify-content: center; 
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+        .control-btns button { 
+            padding: 12px 20px; 
+            border: 2px solid;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer; 
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: transparent;
+        }
+        #replay-btn { 
+            color: var(--neon-green);
+            border-color: var(--neon-green);
+            text-shadow: 0 0 5px var(--neon-green);
+            display: none;
+        }
+        #replay-btn:active { background: rgba(57,255,20,0.2); }
+        #menu-btn { 
+            color: var(--neon-purple);
+            border-color: var(--neon-purple);
+            text-shadow: 0 0 5px var(--neon-purple);
+        }
+        #menu-btn:active { background: rgba(191,0,255,0.2); }
+        #next-word-btn { 
+            color: var(--neon-orange);
+            border-color: var(--neon-orange);
+            text-shadow: 0 0 5px var(--neon-orange);
+            display: none;
+        }
+        #next-word-btn:active { background: rgba(255,102,0,0.2); }
+        
+        /* RÈGLES */
+        #rules { 
+            font-size: 11px; 
+            color: #aaa; 
+            margin: 10px 0; 
+            padding: 10px; 
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--neon-purple);
+            text-align: left;
+            line-height: 1.5;
+        }
+        #rules h3 { 
+            text-align: center; 
+            color: var(--neon-yellow); 
+            margin-bottom: 8px;
+            text-shadow: 0 0 5px var(--neon-yellow);
+            font-size: 12px;
+        }
+        #rules ul { margin-left: 15px; }
+        #rules li { margin: 4px 0; }
+        
+        /* ===== HIGH SCORES ===== */
+        #highscore-btn-menu {
+            display: block;
+            width: 80%;
+            margin: 20px auto;
+            padding: 12px;
+            background: transparent;
+            color: var(--neon-yellow);
+            border: 2px solid var(--neon-yellow);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            text-shadow: 0 0 10px var(--neon-yellow);
+        }
+        #highscore-btn-menu:active { background: rgba(255,255,0,0.2); }
+        
+        #highscore-section {
+            display: none;
+            padding: 15px 0;
+        }
+        
+        #highscore-section h2 {
+            color: var(--neon-yellow);
+            text-shadow: 0 0 10px var(--neon-yellow);
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .highscore-tabs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .highscore-tab {
+            padding: 8px 16px;
+            background: transparent;
+            border: 2px solid;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        
+        .tab-5min {
+            color: var(--neon-orange);
+            border-color: var(--neon-orange);
+            text-shadow: 0 0 5px var(--neon-orange);
+        }
+        .tab-5min.active {
+            background: rgba(255,102,0,0.2);
+        }
+        
+        .tab-10min {
+            color: var(--neon-red);
+            border-color: var(--neon-red);
+            text-shadow: 0 0 5px var(--neon-red);
+        }
+        .tab-10min.active {
+            background: rgba(255,7,58,0.2);
+        }
+        
+        .highscore-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .highscore-table th {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 5px var(--neon-cyan);
+            padding: 8px;
+            border-bottom: 2px solid var(--neon-cyan);
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        .highscore-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(0,255,255,0.2);
+            font-size: 13px;
+        }
+        
+        .highscore-table .rank-1 { color: var(--neon-yellow); text-shadow: 0 0 10px var(--neon-yellow); font-weight: bold; }
+        .highscore-table .rank-2 { color: #c0c0c0; text-shadow: 0 0 5px #c0c0c0; }
+        .highscore-table .rank-3 { color: #cd7f32; text-shadow: 0 0 5px #cd7f32; }
+        .highscore-table .rank-other { color: #aaa; }
+        
+        .highscore-table .score-cell {
+            color: var(--neon-green);
+            text-shadow: 0 0 5px var(--neon-green);
+            font-weight: bold;
+        }
+        
+        .highscore-table .name-cell {
+            color: var(--neon-cyan);
+        }
+        
+        .highscore-table .date-cell {
+            color: #888;
+            font-size: 10px;
+        }
+        
+        .no-scores {
+            color: #888;
+            font-size: 12px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+        
+        /* INPUT NOM HIGH SCORE */
+        #name-input-section {
+            display: none;
+            margin: 15px 0;
+            padding: 20px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid var(--neon-yellow);
+        }
+        
+        #name-input-section h3 {
+            color: var(--neon-yellow);
+            text-shadow: 0 0 10px var(--neon-yellow);
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        #name-input-section p {
+            color: var(--neon-cyan);
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+        
+        #player-name {
+            width: 70%;
+            padding: 10px;
+            font-size: 16px;
+            text-align: center;
+            background: var(--dark-bg);
+            border: 2px solid var(--neon-green);
+            color: var(--neon-green);
+            font-family: inherit;
+            text-transform: uppercase;
+            text-shadow: 0 0 5px var(--neon-green);
+        }
+        #player-name:focus { outline: none; border-color: var(--neon-yellow); }
+        
+        .name-btns {
+            margin-top: 10px;
+        }
+        .name-btns button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            border: 2px solid;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 12px;
+            background: transparent;
+        }
+        #save-name-btn {
+            color: var(--neon-green);
+            border-color: var(--neon-green);
+        }
+        #save-name-btn:active { background: rgba(57,255,20,0.2); }
+        #skip-name-btn {
+            color: var(--neon-purple);
+            border-color: var(--neon-purple);
+        }
+        #skip-name-btn:active { background: rgba(191,0,255,0.2); }
+        
+        /* OVERLAY */
+        #overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(5,5,16,0.95); 
+            z-index: 100; 
+            justify-content: center; 
+            align-items: center;
+            overflow-y: auto;
+        }
+        #overlay-content { 
+            background: var(--darker-bg);
+            padding: 30px 20px; 
+            border: 2px solid var(--neon-pink);
+            box-shadow: 0 0 20px var(--neon-pink);
+            text-align: center; 
+            max-width: 320px; 
+            width: 90%;
+            margin: auto;
+        }
+        #overlay-title {
+            color: var(--neon-yellow);
+            margin-bottom: 15px;
+            font-size: 16px;
+            text-shadow: 0 0 10px var(--neon-yellow);
+        }
+        #final-stats { 
+            font-size: 13px; 
+            margin: 15px 0; 
+            line-height: 1.8;
+            color: var(--neon-cyan);
+        }
+        .big-number { 
+            font-size: 42px; 
+            font-weight: bold; 
+            color: var(--neon-green);
+            text-shadow: 0 0 20px var(--neon-green);
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <svg viewBox="0 0 200 200">
-        <line x1="20" y1="190" x2="180" y2="190" stroke="black" stroke-width="4" />
-        <line x1="50" y1="190" x2="50" y2="20" stroke="black" stroke-width="4" />
-        <line x1="50" y1="20" x2="140" y2="20" stroke="black" stroke-width="4" />
-        <line x1="140" y1="20" x2="140" y2="40" stroke="black" stroke-width="4" />
-        <circle id="head" cx="140" cy="60" r="20" class="draw" />
-        <line id="body" x1="140" y1="80" x2="140" y2="130" class="draw" />
-        <line id="arm1" x1="140" y1="90" x2="110" y2="120" class="draw" />
-        <line id="arm2" x1="140" y1="90" x2="170" y2="120" class="draw" />
-        <line id="hand1" x1="110" y1="120" x2="100" y2="110" class="draw" />
-        <line id="hand2" x1="170" y1="120" x2="180" y2="110" class="draw" />
-        <line id="leg1" x1="140" y1="130" x2="110" y2="170" class="draw" />
-        <line id="leg2" x1="140" y1="130" x2="170" y2="170" class="draw" />
-        <line id="foot1" x1="110" y1="170" x2="100" y2="175" class="draw" />
-        <line id="foot2" x1="170" y1="170" x2="180" y2="175" class="draw" />
-    </svg>
-
-    <div id="word-display">_ _ _ _ _</div>
-    <div id="keyboard"></div>
-    <input type="text" id="mot-input" placeholder="Tenter le mot complet ici">
+    <h1>🔥 PAT PENDU 🔥</h1>
+    
+    <!-- MENU -->
+    <div id="menu">
+        <button class="mode-btn mode-1" onclick="startMode(1)">
+            🎯 ONE SHOT
+            <div class="mode-desc">Sans limite. Lettres ou mot complet.</div>
+        </button>
+        <button class="mode-btn mode-2" onclick="startMode(2)">
+            ⚡ 5 MIN
+            <div class="mode-desc">+5/-2 pts lettre · +20/-20 pts mot</div>
+        </button>
+        <button class="mode-btn mode-3" onclick="startMode(3)">
+            🔥 10 MIN
+            <div class="mode-desc">Maximisez votre score !</div>
+        </button>
+        
+        <button id="highscore-btn-menu" onclick="showHighScoresFromMenu()">🏆 HIGH SCORES</button>
+    </div>
+    
+    <!-- HIGH SCORES SECTION -->
+    <div id="highscore-section">
+        <h2>🏆 TABLEAU DES SCORES</h2>
+        <div class="highscore-tabs">
+            <button class="highscore-tab tab-5min active" onclick="switchHighScoreTab(5)">⚡ 5 MIN</button>
+            <button class="highscore-tab tab-10min" onclick="switchHighScoreTab(10)">🔥 10 MIN</button>
+        </div>
+        <div id="highscore-table-container"></div>
+        <div class="control-btns">
+            <button onclick="hideHighScores()" style="color:var(--neon-purple);border-color:var(--neon-purple);text-shadow:0 0 5px var(--neon-purple);background:transparent;">📋 MENU</button>
+        </div>
+    </div>
+    
+    <!-- HUD -->
+    <div id="hud" style="display:none;">
+        <div>
+            <div id="timer">--:--</div>
+            <div id="word-count">MOTS: 0</div>
+        </div>
+        <div id="score">SCORE: 0</div>
+    </div>
+    
+    <!-- SVG PENDU -->
+    <div id="svg-container">
+        <svg id="pendu-svg" viewBox="0 0 200 200" style="display:none;">
+            <line class="base" x1="20" y1="190" x2="180" y2="190" />
+            <line class="base" x1="50" y1="190" x2="50" y2="20" />
+            <line class="base" x1="50" y1="20" x2="140" y2="20" />
+            <line class="base" x1="140" y1="20" x2="140" y2="40" />
+            <circle id="head" cx="140" cy="60" r="20" class="draw" />
+            <line id="body" x1="140" y1="80" x2="140" y2="130" class="draw" />
+            <line id="arm1" x1="140" y1="90" x2="110" y2="120" class="draw" />
+            <line id="arm2" x1="140" y1="90" x2="170" y2="120" class="draw" />
+            <line id="hand1" x1="110" y1="120" x2="100" y2="110" class="draw" />
+            <line id="hand2" x1="170" y1="120" x2="180" y2="110" class="draw" />
+            <line id="leg1" x1="140" y1="130" x2="110" y2="170" class="draw" />
+            <line id="leg2" x1="140" y1="130" x2="170" y2="170" class="draw" />
+            <line id="foot1" x1="110" y1="170" x2="100" y2="175" class="draw" />
+            <line id="foot2" x1="170" y1="170" x2="180" y2="175" class="draw" />
+        </svg>
+    </div>
+    
+    <!-- AFFICHAGE MOT -->
+    <div id="word-display" style="display:none;"></div>
+    
+    <!-- BOUTON J'AI TROUVÉ -->
+    <button id="found-btn" style="display:none;" onclick="showWordInput()">💡 J'AI TROUVÉ !</button>
+    
+    <!-- INPUT MOT COMPLET -->
+    <div id="word-input-section">
+        <p>▶ MOT COMPLET :</p>
+        <input type="text" id="word-input" placeholder="MOT" autocomplete="off" autocorrect="off" autocapitalize="off">
+        <div class="input-btns">
+            <button id="confirm-word" onclick="confirmWord()">✅ OK</button>
+            <button id="cancel-word" onclick="cancelWord()">❌ X</button>
+        </div>
+    </div>
+    
+    <!-- INPUT NOM HIGH SCORE -->
+    <div id="name-input-section">
+        <h3>🎉 NOUVEAU HIGH SCORE !</h3>
+        <p>Score: <span id="new-score-display">0</span> pts</p>
+        <input type="text" id="player-name" placeholder="VOTRE NOM" maxlength="15" autocomplete="off" autocorrect="off" autocapitalize="off">
+        <div class="name-btns">
+            <button id="save-name-btn" onclick="saveHighScore()">💾 SAUVER</button>
+            <button id="skip-name-btn" onclick="skipHighScore()">⏭️ PASSER</button>
+        </div>
+    </div>
+    
+    <!-- CLAVIER -->
+    <div id="keyboard" style="display:none;"></div>
+    
+    <!-- MESSAGE -->
     <div id="message"></div>
-    <button id="replay-btn" onclick="location.reload()">Rejouer</button>
+    
+    <!-- RÈGLES -->
+    <div id="rules" style="display:none;"></div>
+    
+    <!-- BOUTONS -->
+    <div class="control-btns">
+        <button id="next-word-btn" onclick="nextWord()">➡️ SUIVANT</button>
+        <button id="replay-btn" onclick="resetGame()">🔄 REJOUER</button>
+        <button id="menu-btn" onclick="goMenu()">📋 MENU</button>
+    </div>
+</div>
+
+<!-- OVERLAY FIN -->
+<div id="overlay">
+    <div id="overlay-content">
+        <h2 id="overlay-title">🏁 FIN !</h2>
+        <div id="final-stats"></div>
+        <div class="control-btns">
+            <button onclick="showHighScoresFromOverlay()" style="color:var(--neon-yellow);border-color:var(--neon-yellow);text-shadow:0 0 5px var(--neon-yellow);background:transparent;">🏆 SCORES</button>
+            <button onclick="resetGame()" style="color:var(--neon-green);border-color:var(--neon-green);text-shadow:0 0 5px var(--neon-green);background:transparent;">🔄 REJOUER</button>
+            <button onclick="goMenu()" style="color:var(--neon-purple);border-color:var(--neon-purple);text-shadow:0 0 5px var(--neon-purple);background:transparent;">📋 MENU</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    const words = ["AVION", "BATEAU", "CARTABLE", "DINOSAURE", "ECOLE", "FRANCAIS", "HEROS", "IMAGE", "JARDIN"];
-    let selectedWord = words[Math.floor(Math.random() * words.length)];
-    let guessedWord = Array(selectedWord.length).fill("_");
+    const WORDS = [
+        "AVION", "BATEAU", "CARTABLE", "DINOSAURE", "ECOLE", "FRANCAIS", 
+        "HEROS", "IMAGE", "JARDIN", "KANGOUROU", "LIVRE", "MAISON", 
+        "NUAGE", "OISEAU", "PAPILLON", "QUATRE", "RATON", "SOURIS", 
+        "TIGRE", "UNIVERS", "VACHE", "WAGON", "XYLOPHONE", "YACHT", "ZEBRE",
+        "ARBRE", "BALLON", "CHAT", "DOIGT", "ELEPHANT", "FLEUR", "GUITARE",
+        "HIBOU", "IGLOO", "JOUET", "KAYAK", "LUNE", "MONTAGNE", "NEIGE",
+        "ORANGE", "PIANO", "REQUIN", "SERPENT", "TABLE", "USINE", "VIOLON",
+        "WIFI", "YOGOURT", "ZOO"
+    ];
+    
+    const PARTS = ["head", "body", "arm1", "arm2", "hand1", "hand2", "leg1", "leg2", "foot1", "foot2"];
+    const MAX_ERRORS = PARTS.length;
+    
+    let currentMode = 0;
+    let selectedWord = "";
+    let guessedWord = [];
     let mistakes = 0;
-    const parts = ["head", "body", "arm1", "arm2", "hand1", "hand2", "leg1", "leg2", "foot1", "foot2"];
-
-    const kb = document.getElementById("keyboard");
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(letter => {
-        const btn = document.createElement("div");
-        btn.className = "key";
-        btn.innerText = letter;
-        btn.onclick = () => handleLetter(letter, btn);
-        kb.appendChild(btn);
+    let score = 0;
+    let wordsFound = 0;
+    let timerInterval = null;
+    let timeLeft = 0;
+    let gameActive = false;
+    let lettersFound = 0;
+    let lettersTotal = 0;
+    let pendingScore = 0;
+    let pendingMode = 0;
+    
+    // ===== HIGH SCORES STORAGE =====
+    function getHighScores(mode) {
+        const key = mode === 5 ? 'patpendu_hs_5min' : 'patpendu_hs_10min';
+        const stored = localStorage.getItem(key);
+        return stored ? JSON.parse(stored) : [];
+    }
+    
+    function saveHighScores(mode, scores) {
+        const key = mode === 5 ? 'patpendu_hs_5min' : 'patpendu_hs_10min';
+        localStorage.setItem(key, JSON.stringify(scores));
+    }
+    
+    function isHighScore(mode, score) {
+        const scores = getHighScores(mode);
+        if (scores.length < 10) return true;
+        return score > scores[scores.length - 1].score;
+    }
+    
+    function addHighScore(mode, name, score, words) {
+        const scores = getHighScores(mode);
+        const newEntry = {
+            name: name.toUpperCase(),
+            score: score,
+            words: words,
+            date: new Date().toLocaleDateString('fr-FR')
+        };
+        
+        scores.push(newEntry);
+        scores.sort((a, b) => b.score - a.score);
+        
+        // Garde seulement les 10 meilleurs
+        const top10 = scores.slice(0, 10);
+        saveHighScores(mode, top10);
+        return top10;
+    }
+    
+    // ===== HIGH SCORES UI =====
+    function showHighScoresFromMenu() {
+        document.getElementById("menu").style.display = "none";
+        document.getElementById("highscore-section").style.display = "block";
+        renderHighScores(5);
+    }
+    
+    function showHighScoresFromOverlay() {
+        document.getElementById("overlay").style.display = "none";
+        document.getElementById("highscore-section").style.display = "block";
+        renderHighScores(currentMode === 2 ? 5 : 10);
+    }
+    
+    function hideHighScores() {
+        document.getElementById("highscore-section").style.display = "none";
+        document.getElementById("menu").style.display = "block";
+    }
+    
+    function switchHighScoreTab(mode) {
+        // Update active tab
+        document.querySelector('.tab-5min').classList.toggle('active', mode === 5);
+        document.querySelector('.tab-10min').classList.toggle('active', mode === 10);
+        
+        renderHighScores(mode);
+    }
+    
+    function renderHighScores(mode) {
+        const scores = getHighScores(mode);
+        const container = document.getElementById("highscore-table-container");
+        
+        if (scores.length === 0) {
+            container.innerHTML = '<div class="no-scores">Aucun score enregistré. Jouez pour entrer dans le classement !</div>';
+            return;
+        }
+        
+        let html = '<table class="highscore-table">';
+        html += '<tr><th>RANG</th><th>NOM</th><th>SCORE</th><th>MOTS</th><th>DATE</th></tr>';
+        
+        scores.forEach((entry, index) => {
+            const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : 'rank-other';
+            const rankIcon = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
+            
+            html += '<tr>';
+            html += '<td class="' + rankClass + '">' + rankIcon + '</td>';
+            html += '<td class="name-cell">' + escapeHtml(entry.name) + '</td>';
+            html += '<td class="score-cell">' + entry.score + '</td>';
+            html += '<td>' + entry.words + '</td>';
+            html += '<td class="date-cell">' + entry.date + '</td>';
+            html += '</tr>';
+        });
+        
+        html += '</table>';
+        container.innerHTML = html;
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // ===== NAME INPUT =====
+    function showNameInput(finalScore, mode) {
+        pendingScore = finalScore;
+        pendingMode = mode;
+        
+        document.getElementById("new-score-display").innerText = finalScore;
+        document.getElementById("name-input-section").style.display = "block";
+        document.getElementById("player-name").value = "";
+        document.getElementById("player-name").focus();
+        
+        // Cache l'overlay temporairement
+        document.getElementById("overlay").style.display = "none";
+    }
+    
+    function saveHighScore() {
+        const name = document.getElementById("player-name").value.trim();
+        if (!name) {
+            alert("Entrez un nom !");
+            return;
+        }
+        
+        addHighScore(pendingMode, name, pendingScore, wordsFound);
+        
+        document.getElementById("name-input-section").style.display = "none";
+        
+        // Affiche le tableau des scores
+        document.getElementById("highscore-section").style.display = "block";
+        renderHighScores(pendingMode);
+    }
+    
+    function skipHighScore() {
+        document.getElementById("name-input-section").style.display = "none";
+        // Réaffiche l'overlay
+        document.getElementById("overlay").style.display = "flex";
+    }
+    
+    document.getElementById("player-name").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") saveHighScore();
     });
-
-    function handleLetter(letter, btn) {
-        btn.style.visibility = "hidden";
-        if (selectedWord.includes(letter)) {
-            for (let i = 0; i < selectedWord.length; i++) {
-                if (selectedWord[i] === letter) guessedWord[i] = letter;
-            }
-            document.getElementById("word-display").innerText = guessedWord.join(" ");
-            if (!guessedWord.includes("_")) endGame("Bravo !");
+    
+    // ===== GAME FUNCTIONS =====
+    function startMode(mode) {
+        currentMode = mode;
+        document.getElementById("menu").style.display = "none";
+        document.getElementById("highscore-section").style.display = "none";
+        document.getElementById("hud").style.display = "flex";
+        document.getElementById("pendu-svg").style.display = "block";
+        document.getElementById("word-display").style.display = "block";
+        document.getElementById("keyboard").style.display = "grid";
+        document.getElementById("rules").style.display = "block";
+        document.getElementById("found-btn").style.display = "block";
+        
+        if (mode === 1) {
+            document.getElementById("timer").style.display = "none";
+            document.getElementById("score").style.display = "none";
+            document.getElementById("rules").innerHTML = "<h3>🎯 ONE SHOT</h3><ul><li>Devinez lettre par lettre</li><li>💡 J'AI TROUVÉ pour le mot complet</li><li>Rejouez sans limite !</li></ul>";
         } else {
-            document.getElementById(parts[mistakes]).classList.add("visible");
-            mistakes++;
-            if (mistakes >= parts.length) endGame("Perdu !");
+            document.getElementById("timer").style.display = "block";
+            document.getElementById("score").style.display = "block";
+            timeLeft = mode === 2 ? 300 : 600;
+            score = 0;
+            wordsFound = 0;
+            updateHUD();
+            startTimer();
+            document.getElementById("rules").innerHTML = 
+                "<h3>⚡ " + (mode === 2 ? '5' : '10') + " MIN</h3>" +
+                "<ul><li>+5 pts lettre · -2 pts erreur</li><li>+20 pts mot (≥50%) · -20 pts raté</li></ul>";
+        }
+        
+        initGame();
+    }
+    
+    function goMenu() {
+        clearInterval(timerInterval);
+        resetUI();
+        document.getElementById("menu").style.display = "block";
+        document.getElementById("highscore-section").style.display = "none";
+        document.getElementById("hud").style.display = "none";
+        document.getElementById("pendu-svg").style.display = "none";
+        document.getElementById("word-display").style.display = "none";
+        document.getElementById("keyboard").style.display = "none";
+        document.getElementById("rules").style.display = "none";
+        document.getElementById("found-btn").style.display = "none";
+        document.getElementById("message").innerText = "";
+        document.getElementById("message").className = "";
+        document.getElementById("overlay").style.display = "none";
+        document.getElementById("replay-btn").style.display = "none";
+        document.getElementById("next-word-btn").style.display = "none";
+        document.getElementById("word-input-section").style.display = "none";
+        document.getElementById("name-input-section").style.display = "none";
+    }
+    
+    function initGame() {
+        let newWord;
+        do {
+            newWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+        } while (newWord === selectedWord && WORDS.length > 1);
+        
+        selectedWord = newWord;
+        guessedWord = Array(selectedWord.length).fill("_");
+        mistakes = 0;
+        lettersFound = 0;
+        lettersTotal = selectedWord.length;
+        gameActive = true;
+        
+        PARTS.forEach(p => document.getElementById(p).classList.remove("visible"));
+        document.getElementById("message").innerText = "";
+        document.getElementById("message").className = "";
+        document.getElementById("word-input").value = "";
+        document.getElementById("word-input-section").style.display = "none";
+        document.getElementById("name-input-section").style.display = "none";
+        document.getElementById("replay-btn").style.display = "none";
+        document.getElementById("next-word-btn").style.display = "none";
+        
+        buildKeyboard();
+        updateDisplay();
+    }
+    
+    function resetGame() {
+        clearInterval(timerInterval);
+        document.getElementById("overlay").style.display = "none";
+        document.getElementById("name-input-section").style.display = "none";
+        
+        if (currentMode === 1) {
+            initGame();
+        } else {
+            score = 0;
+            wordsFound = 0;
+            timeLeft = currentMode === 2 ? 300 : 600;
+            updateHUD();
+            startTimer();
+            initGame();
         }
     }
-
-    document.getElementById("mot-input").addEventListener("keypress", function(e) {
-        if (e.key === "Enter" && this.value) {
-            if (this.value.toUpperCase() === selectedWord) endGame("SUPER BRAVO !");
-            else endGame("Perdu !");
+    
+    function resetUI() {
+        PARTS.forEach(p => document.getElementById(p).classList.remove("visible"));
+        document.getElementById("keyboard").innerHTML = "";
+    }
+    
+    function buildKeyboard() {
+        const kb = document.getElementById("keyboard");
+        kb.innerHTML = "";
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(letter => {
+            const btn = document.createElement("div");
+            btn.className = "key";
+            btn.innerText = letter;
+            btn.id = "key-" + letter;
+            btn.onclick = function() { handleLetter(letter); };
+            kb.appendChild(btn);
+        });
+    }
+    
+    function handleLetter(letter) {
+        if (!gameActive) return;
+        
+        const btn = document.getElementById("key-" + letter);
+        if (btn.classList.contains("used")) return;
+        
+        btn.classList.add("used");
+        btn.onclick = null;
+        
+        if (selectedWord.includes(letter)) {
+            btn.classList.add("correct");
+            let found = 0;
+            for (let i = 0; i < selectedWord.length; i++) {
+                if (selectedWord[i] === letter) {
+                    guessedWord[i] = letter;
+                    found++;
+                }
+            }
+            lettersFound += found;
+            updateDisplay();
+            
+            if (currentMode !== 1) {
+                score += found * 5;
+                updateHUD();
+            }
+            
+            if (!guessedWord.includes("_")) {
+                endWord(true, "lettre");
+            }
+        } else {
+            btn.classList.add("wrong");
+            if (mistakes < MAX_ERRORS) {
+                document.getElementById(PARTS[mistakes]).classList.add("visible");
+                mistakes++;
+            }
+            
+            if (currentMode !== 1) {
+                score -= 2;
+                updateHUD();
+            }
+            
+            if (mistakes >= MAX_ERRORS) {
+                endWord(false, "pendu");
+            }
         }
+    }
+    
+    function showWordInput() {
+        if (!gameActive) return;
+        document.getElementById("word-input-section").style.display = "block";
+        document.getElementById("word-input").focus();
+    }
+    
+    function cancelWord() {
+        document.getElementById("word-input-section").style.display = "none";
+        document.getElementById("word-input").value = "";
+    }
+    
+    function confirmWord() {
+        const input = document.getElementById("word-input").value.toUpperCase().trim();
+        if (!input) return;
+        
+        document.getElementById("word-input-section").style.display = "none";
+        document.getElementById("word-input").value = "";
+        
+        if (input === selectedWord) {
+            const remainingUnderscores = guessedWord.filter(c => c === "_").length;
+            const percentRemaining = remainingUnderscores / lettersTotal;
+            
+            guessedWord = selectedWord.split("");
+            updateDisplay();
+            
+            if (currentMode !== 1 && percentRemaining >= 0.5) {
+                score += 20;
+                updateHUD();
+            }
+            
+            endWord(true, "trouve");
+        } else {
+            mistakes = MAX_ERRORS;
+            PARTS.forEach(p => document.getElementById(p).classList.add("visible"));
+            
+            if (currentMode !== 1) {
+                score -= 20;
+                updateHUD();
+            }
+            
+            endWord(false, "rate");
+        }
+    }
+    
+    document.getElementById("word-input").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") confirmWord();
     });
-
-    function endGame(msg) {
-        document.getElementById("message").innerText = msg;
-        document.getElementById("word-display").innerText = selectedWord;
-        document.getElementById("keyboard").style.display = "none";
-        document.getElementById("mot-input").style.display = "none";
-        document.getElementById("replay-btn").style.display = "inline-block";
-        if (msg === "Perdu !") parts.forEach(p => document.getElementById(p).classList.add("visible"));
+    
+    function endWord(won, how) {
+        gameActive = false;
+        wordsFound++;
+        updateHUD();
+        
+        const msg = document.getElementById("message");
+        
+        if (won) {
+            if (how === "trouve") {
+                msg.innerText = "🏆 SUPER !";
+            } else {
+                msg.innerText = "🎉 BRAVO !";
+            }
+            msg.className = "msg-win";
+            
+            if (currentMode === 1) {
+                document.getElementById("replay-btn").style.display = "inline-block";
+            } else {
+                document.getElementById("next-word-btn").style.display = "inline-block";
+            }
+        } else {
+            if (how === "rate") {
+                msg.innerText = "💀 RATÉ !";
+            } else {
+                msg.innerText = "💀 PENDU !";
+            }
+            msg.className = "msg-lose";
+            document.getElementById("word-display").innerText = selectedWord;
+            
+            if (currentMode === 1) {
+                document.getElementById("replay-btn").style.display = "inline-block";
+            } else {
+                document.getElementById("next-word-btn").style.display = "inline-block";
+            }
+        }
+    }
+    
+    function nextWord() {
+        initGame();
+    }
+    
+    function startTimer() {
+        clearInterval(timerInterval);
+        updateTimerDisplay();
+        
+        timerInterval = setInterval(function() {
+            timeLeft--;
+            updateTimerDisplay();
+            updateHUD();
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                endGame();
+            }
+        }, 1000);
+    }
+    
+    function updateTimerDisplay() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        document.getElementById("timer").innerText = minutes + ":" + seconds.toString().padStart(2, '0');
+        
+        if (timeLeft <= 30) {
+            document.getElementById("timer").style.color = "var(--neon-red)";
+        } else if (timeLeft <= 60) {
+            document.getElementById("timer").style.color = "var(--neon-orange)";
+        } else {
+            document.getElementById("timer").style.color = "var(--neon-red)";
+        }
+    }
+    
+    function updateHUD() {
+        document.getElementById("score").innerText = "SCORE: " + score;
+        document.getElementById("word-count").innerText = "MOTS: " + wordsFound;
+    }
+    
+    function endGame() {
+        gameActive = false;
+        clearInterval(timerInterval);
+        
+        const avgScore = wordsFound > 0 ? Math.round(score / wordsFound) : 0;
+        const challengeMode = currentMode === 2 ? 5 : 10;
+        
+        // Vérifie si c'est un high score
+        const isHS = isHighScore(challengeMode, score);
+        
+        document.getElementById("overlay-title").innerText = "🏁 TEMPS ÉCOULÉ !";
+        
+        let statsHtml = '<div class="big-number">' + score + '</div>';
+        statsHtml += '<div>POINTS TOTAL</div>';
+        if (isHS) {
+            statsHtml += '<div style="color:var(--neon-yellow);text-shadow:0 0 10px var(--neon-yellow);margin:10px 0;">🎉 NOUVEAU HIGH SCORE !</div>';
+        }
+        statsHtml += '<hr style="margin:10px 0;border:none;border-top:1px solid var(--neon-pink);">';
+        statsHtml += '<div>📝 MOTS: <strong>' + wordsFound + '</strong></div>';
+        statsHtml += '<div>📊 MOYENNE: <strong>' + avgScore + '</strong> PTS/MOT</div>';
+        statsHtml += '<div>⏱️ DURÉE: <strong>' + challengeMode + '</strong> MIN</div>';
+        
+        document.getElementById("final-stats").innerHTML = statsHtml;
+        document.getElementById("overlay").style.display = "flex";
+        
+        // Si high score, demande le nom après un court délai
+        if (isHS) {
+            setTimeout(function() {
+                showNameInput(score, challengeMode);
+            }, 500);
+        }
+    }
+    
+    function updateDisplay() {
+        document.getElementById("word-display").innerText = guessedWord.join(" ");
     }
 </script>
 </body>
